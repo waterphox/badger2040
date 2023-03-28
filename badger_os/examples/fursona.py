@@ -39,7 +39,8 @@ OVERLAY_TEXT_SIZE = 0.5
 centers = (41, 147, 253)
 btnlabels = (("MENU", "RE-DRAW", "GENERATE!!"),
              ("MENU", "SAVE", "SPEED"),
-             ("MENU", "o3o", "CREDIT"))
+             ("MENU", "o3o", "CREDIT"),
+             ("YES", "", "NO"))
 btnlabelsize = 0.6
 
 button_a = badger2040.BUTTON_A
