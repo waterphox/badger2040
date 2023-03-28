@@ -40,6 +40,7 @@ OVERLAY_TEXT_SIZE = 0.5
 centers = (41, 147, 253)
 btnlabels = (("MENU", "RE-DRAW", "GENERATE!!"),
              ("MENU", "SAVE", "SPEED"),
+             ("MENU", "LOAD", "VERSION"),
              ("MENU", "o3o", "CREDIT"),
              ("YES", "", "NO"))
 btnlabelsize = 0.6
@@ -166,6 +167,8 @@ def button(pin):
             menupage = 1
         elif menupage == 1: # MENU, SAVE, SPEED
             menupage = 2
+        elif menupage == 2: # MENU, LOAD, SAVE
+            menupage = 3
         else:               # MENU, o3o, CREDIT
             menupage = 0
         display.set_update_speed(3)
@@ -196,6 +199,8 @@ def button(pin):
             drawThatFursona()
             render()
             display.update()
+        elif menupage == 2: # LOAD Menu Option
+            pass
         else:               # o3o Menu Option
             display.set_update_speed(1)
             currentFurre = len(fursonas) - 1  # This is just so the Save button won't work when a o3o message is on the screen
@@ -238,7 +243,9 @@ def button(pin):
             display.partial_update(int(WIDTH / 3) * 2, 112, WIDTH - int(WIDTH / 3) * 2, 16)
             time.sleep(0.3)
             render(1)
-        else:               # CREDIT
+        elif menupage == 2: # VERSION Menu Option
+            pass
+        else:               # CREDIT Menu Option
             display.set_update_speed(2)
             draw_overlay("Content from an online fursona generator made by softhoof. Migrated to Micropython and content added by Waterfox.", WIDTH - OVERLAY_BORDER, HEIGHT - OVERLAY_BORDER, OVERLAY_SPACING, 0.5)
             display.update()
