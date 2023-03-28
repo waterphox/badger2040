@@ -19,7 +19,7 @@ description = ("it constantly drips with a tar-like black substance.","it enjoys
 badger = badger2040.Badger2040()
 display = badger
 
-fursonasavefile = "" # The file will be created if it does not exist
+fursonasavefile = "output files/fursonasfile.txt" # Full path including any directories. The file will be created if it does not exist.
 
 font_size = 2
 inverted = False
@@ -173,9 +173,30 @@ def button(pin):
             display.set_update_speed(3)
             render()
         elif menupage == 1: # SAVE
-            pass
-        else:               # o3o
+            if len(fursonas) == 2:                         # Checks that we've even generated one yet.
+                drawThatFursona("You have to generate one, first!")
+            else:                                          # We've generated at least one fursona already.
+                if currentFurre == 0 or currentFurre == len(fursonas) - 1: # Checks against the Beginning/End messages being shown
+                    drawThatFursona("That's not a fursona!")
+                else:                                      # We're actually viewing a fursona
+                    furfile = open(fursonasavefile, "a")   # Opens the existing file in append mode, or creates the file if it doesn't exist.
+                    savefurcount = furfile.readlines()     # Checks how many furres are in the file alreadygoo
+                    if str(savefurcount).find(str(fursonas[currentFurre])) != -1: #Confirming furre doesn't already exist in the file
+                        drawThatFursona("Furre already saved in file!")
+                    else:
+                        furfile.seek(0, 2)                     # Seeks to the end of the file.
+                        furfile.write(fursonas[currentFurre] + '\n')  # Writes the current fursona to the file!
+                        drawThatFursona("Done! Fursonas in file: " + str(len(savefurcount) + 1))
+                    furfile.close()
+            display.set_update_speed(3)
+            display.update()                               # After all that, show whatever message is relevant based on what happened.
+            time.sleep(1)
+            drawThatFursona()
+            render()
+            display.update()
+        else:               # o3o Menu Option
             display.set_update_speed(1)
+            currentFurre = len(fursonas) - 1  # This is just so the Save button won't work when a o3o message is on the screen
             if o3ostate == 0:
                 drawThatFursona("It looks like a blue fox! o3o")
                 o3ostate = 1
@@ -228,16 +249,16 @@ def button(pin):
             pass
         else:
             currentFurre = currentFurre - 1
-            drawThatFursona()
-            display.update()
+        drawThatFursona()
+        display.update()
     if pin == button_down:
         pass
         if currentFurre == len(fursonas) - 1:
             pass
         else:
             currentFurre = currentFurre + 1
-            drawThatFursona()
-            display.update()
+        drawThatFursona()
+        display.update()
 
 
 # Initial Interface Drawng before the main loop
