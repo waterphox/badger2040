@@ -150,7 +150,7 @@ def drawThatFursona(override=""):
     line_spacing = (20, 20)
     lines = []
     current_line = ""
-    fontcutoff = 100
+    fontcutoff = 116
     smallfont = 1
     if len(fursonas[currentFurre]) >= fontcutoff and override == "":
 #        display.set_font("bitmap6") # Use smaller font for v2
