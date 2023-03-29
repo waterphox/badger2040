@@ -12,11 +12,9 @@ btnb = machine.Pin(badger2040.BUTTON_B, machine.Pin.IN, machine.Pin.PULL_DOWN)
 btnc = machine.Pin(badger2040.BUTTON_C, machine.Pin.IN, machine.Pin.PULL_DOWN)
 btnu = machine.Pin(badger2040.BUTTON_UP, machine.Pin.IN, machine.Pin.PULL_DOWN)
 btnd = machine.Pin(badger2040.BUTTON_DOWN, machine.Pin.IN, machine.Pin.PULL_DOWN)
-# Inverted. For reasons.
-btnr = machine.Pin(badger2040.BUTTON_USER, machine.Pin.IN, machine.Pin.PULL_UP)
 
 try:
-    squares = bytearray(open("support files/eliminationsquares.bin").read())
+    squares = bytearray(open("support files/eliminationsquares.bin", "rb").read())
 except (OSError, ImportError):
     machine.reset()
     pass #Reset this with a failure function that just says what the error is and says to reset
@@ -103,7 +101,7 @@ def eliminate_square(sq): #used ONLY to update a square to eliminated during gam
     #OLD 0 a1, 1 b1, 2 c1, 3 down1, 4 up1, 5 a2, 6 b2, 7 up2, 8 ctri2, 9 downtri2 THIS WAS PROBLEMATIC SO I REORDERED
     #0 a1, 1 b1, 2 c1, 3 down1, 4 up1, 5 a2, 6 b2, 7 ctri2, 8 downtri2, 9 up2
     d.led(200)
-    d.update_speed(badger2040.UPDATE_SUPER_EXTRA_TURBO)
+    d.set_update_speed(3)
     global activesquares
     if sq == 0: #a1
         activesquares[0][0] = 0
@@ -158,7 +156,7 @@ def activate_square(sq): #used ONLY to show a new square during gameplay
     #sq is the square to update
     #0 a1, 1 b1, 2 c1, 3 down1, 4 up1, 5 a2, 6 b2, 7 ctri2, 8 downtri2, 9 up2
     #d.led(220)
-    d.update_speed(badger2040.UPDATE_SUPER_EXTRA_TURBO)
+    d.set_update_speed(3)
     global activesquares
     if sq == 0: #a1
         activesquares[0][0] = 1
@@ -210,26 +208,26 @@ def activate_square(sq): #used ONLY to show a new square during gameplay
     pass
 
 def countdown(): #Counts down from 3 to WATCH, then triggers whatever function is next to show the pattern
-    d.update_speed(badger2040.UPDATE_SUPER_EXTRA_TURBO)
-    d.pen(0)
-    d.thickness(3)
-    d.font("sans")
-    d.text("3..", 10, 55, 0.7)
+    d.set_update_speed(3)
+    d.set_pen(0)
+    d.set_thickness(3)
+    d.set_font("sans")
+    d.text("3..", 10, 55, scale=0.7)
     d.partial_update(10, 40, 30, 24) #Update 3 to dark
     time.sleep(roundtimes[gmround])
-    d.text("2..", 40, 55, 0.7)
-    d.pen(8)
-    d.text("3..", 10, 55, 0.7)
+    d.text("2..", 40, 55, scale=0.7)
+    d.set_pen(8)
+    d.text("3..", 10, 55, scale=0.7)
     d.partial_update(10, 40, 60, 24) #Update 3 to light, 2 to dark
     time.sleep(roundtimes[gmround])
-    d.text("2..", 40, 55, 0.7)
-    d.pen(0)
-    d.text("1..", 70, 55, 0.7)
+    d.text("2..", 40, 55, scale=0.7)
+    d.set_pen(0)
+    d.text("1..", 70, 55, scale=0.7)
     d.partial_update(40, 40, 60, 24) #Update 2 to light, 1 to dark
     time.sleep(roundtimes[gmround])
-    d.text("WATCH", 105, 55, 0.7)
-    d.pen(8)
-    d.text("1..", 70, 55, 0.7)
+    d.text("WATCH", 105, 55, scale=0.7)
+    d.set_pen(8)
+    d.text("1..", 70, 55, scale=0.7)
     d.partial_update(40, 40, 133, 24) #Update 1 to light, WATCH to dark
     time.sleep(roundtimes[gmround])
     generate_pattern() #Countdown complete. Time to watch the squares
@@ -267,52 +265,52 @@ def generate_pattern(): #Generates the pattern to be remembered, and activates t
                 continue
     print("Pattern: " + pattern)
     time.sleep(roundtimes[gmround])
-    d.pen(8)
-    d.text("WATCH", 105, 55, 0.7)
-    d.pen(0)
-    d.text("GO!", 185, 55, 0.7)
+    d.set_pen(8)
+    d.text("WATCH", 105, 55, scale=0.7)
+    d.set_pen(0)
+    d.text("GO!", 185, 55, scale=0.7)
     d.partial_update(105, 40, 115, 24) #Update WATCH to light, GO! to dark
     active = True
     pass
 
 def show_result(result):
-    d.update_speed(badger2040.UPDATE_SUPER_EXTRA_TURBO)
-    d.pen(15) #White pen for the outline
+    d.set_update_speed(3)
+    d.set_pen(15) #White pen for the outline
     d.rectangle(0, 0, WIDTH, HEIGHT)
     #display.text(result, int(WIDTH / 2) - int(display.measure_text(result) / 2), int(HEIGHT / 2))
-    d.thickness(2)
-    d.pen(0)
-    d.text(result, int(WIDTH / 2) - int(d.measure_text(result, 0.5) / 2), int(HEIGHT / 2), 0.5)
+    d.set_thickness(2)
+    d.set_pen(0)
+    d.text(result, int(WIDTH / 2) - int(d.measure_text(result, 0.5) / 2), int(HEIGHT / 2), scale=0.5)
     d.update()
     pass
 
 def drawstaticui():
-    d.update_speed(badger2040.UPDATE_FAST)
+    d.set_update_speed(badger2040.UPDATE_FAST)
     d.led(255)
-    d.pen(15)
+    d.set_pen(15)
     d.rectangle(0, 0, WIDTH, HEIGHT)
-    d.pen(0) #Black pen
-    d.thickness(2) #2px line
-    d.font("sans")
-    d.text("eliminate the shapes in", 10, 10, 0.6)
-    d.text("the order they appear!", 10, 32, 0.6)
-    d.thickness(2) #1px line for the diagonal bar for corner squares
+    d.set_pen(0) #Black pen
+    d.set_thickness(2) #2px line
+    d.set_font("sans")
+    d.text("eliminate the shapes in", 10, 10, scale=0.6)
+    d.text("the order they appear!", 10, 32, scale=0.6)
+    d.set_thickness(2) #1px line for the diagonal bar for corner squares
     d.line(231, 63, WIDTH, HEIGHT) #Said bar 231 63 to bottom right corner
     
     #Level Text
-    d.font("serif")
-    d.thickness(3)
+    d.set_font("serif")
+    d.set_thickness(3)
     levelmid = int((columns[1] + columns[0]) / 2) + 12
     lvlmid = int(levelmid - d.measure_text("LVL", 0.8) / 2)
     lvltmid = int(levelmid - d.measure_text(str(level), 0.8) / 2)
-    d.text("LVL", lvlmid, 88, 0.8) #66, 84
-    d.text(str(level), lvltmid, 110, 0.8)
+    d.text("LVL", lvlmid, 88, scale=0.8) #66, 84
+    d.text(str(level), lvltmid, 110, scale=0.8)
     
     #Draws the hearts/lives/chances
     d.led(220)
-    d.thickness(2)
-    d.font("serif")
-    d.text("LIVES", 177, 80, 0.5)
+    d.set_thickness(2)
+    d.set_font("serif")
+    d.text("LIVES", 177, 80, scale=0.5)
     for i in range(1, lives + 1):
         d.image(heartData, 16, 16, 231 - i * 16, 86)
         pass
@@ -321,18 +319,18 @@ def drawstaticui():
     levelmid = int((columns[2] + columns[1]) / 2) + 12
     lvlmid = int(levelmid - d.measure_text("ROUND", 0.5) / 2)
     lvltmid = int(levelmid - d.measure_text(str(gmround), 1) / 2)
-    d.text("ROUND", lvlmid, 110, 0.5) #66, 84
-    d.text(str(gmround), lvltmid, 123, 0.5)
+    d.text("ROUND", lvlmid, 110, scale=0.5) #66, 84
+    d.text(str(gmround), lvltmid, 123, scale=0.5)
     
     #Initial Countdown Text
-    d.font("sans")
-    d.thickness(3)
-    d.pen(8)
-    d.text("3..", 10, 55, 0.7)
-    d.text("2..", 40, 55, 0.7)
-    d.text("1..", 70, 55, 0.7)
-    d.text("WATCH", 105, 55, 0.7)
-    d.text("GO!", 185, 55, 0.7)
+    d.set_font("sans")
+    d.set_thickness(3)
+    d.set_pen(8)
+    d.text("3..", 10, 55, scale=0.7)
+    d.text("2..", 40, 55, scale=0.7)
+    d.text("1..", 70, 55, scale=0.7)
+    d.text("WATCH", 105, 55, scale=0.7)
+    d.text("GO!", 185, 55, scale=0.7)
     
     d.update()
     d.led(0)
