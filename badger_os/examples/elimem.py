@@ -30,7 +30,7 @@ roundLoseMsgs = ("Wrong shape, buddy!",
                  "Oops! Try again!",
                  "Nope! >:C")
 
-heartData = bytearray((
+oldheartData = bytearray((
         0b00000000,0b00000000,
         0b00011100,0b00111000,
         0b00111110,0b01111100,
@@ -47,6 +47,24 @@ heartData = bytearray((
         0b00000011,0b11000000,
         0b00000001,0b10000000,
         0b00000000,0b00000000))
+
+heartData =[
+        "00000000","00000000",
+        "00011100","00111000",
+        "00111110","01111100",
+        "01111111","11111110",
+        "01111111","11111110",
+        "01111111","11111110",
+        "01111111","11111110",
+        "00111111","11111100",
+        "00111111","11111100",
+        "00011111","11111000",
+        "00011111","11111000",
+        "00001111","11110000",
+        "00000111","11100000",
+        "00000011","11000000",
+        "00000001","10000000",
+        "00000000","00000000"]
 
 #Left lines for columns, left to right
 columns = (30, 136, 239, 268)
@@ -151,6 +169,22 @@ def eliminate_square(sq): #used ONLY to update a square to eliminated during gam
         d.partial_update(columns[2], 72, 24, 24)
     d.led(0)
     pass
+
+def drawIcon(dats, wid, hig, ex, why): # Expects data (dats) to be an array of 8-character strings instead of a byte array IDK it's hackey
+    bloop = ""
+    for blorp in dats: # Okay I guess technically they don't need to be 8-character strings but that sure makes it easier to visualize
+        bloop += blorp
+    for row in range(hig):
+        for col in range(wid):
+            if bloop != "":
+                if bloop[0] == "0":
+                    d.set_pen(15)
+                else:
+                    d.set_pen(0)
+                d.pixel(ex + col, why + row)
+                bloop = bloop[1:]
+                #print(bloop)
+            
 
 def activate_square(sq): #used ONLY to show a new square during gameplay
     #sq is the square to update
@@ -312,7 +346,7 @@ def drawstaticui():
     d.set_font("serif")
     d.text("LIVES", 177, 80, scale=0.5)
     for i in range(1, lives + 1):
-        d.image(heartData, 16, 16, 231 - i * 16, 86)
+        drawIcon(heartData, 16, 16, 231 - i * 16, 89)
         pass
     
     #Round Text
