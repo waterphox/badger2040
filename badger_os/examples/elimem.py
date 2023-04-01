@@ -2,6 +2,7 @@ import random
 import time
 import machine
 import badger2040
+import badger_os
 from badger2040 import WIDTH, HEIGHT
 
 d = badger2040.Badger2040()
@@ -13,12 +14,6 @@ btnc = machine.Pin(badger2040.BUTTON_C, machine.Pin.IN, machine.Pin.PULL_DOWN)
 btnu = machine.Pin(badger2040.BUTTON_UP, machine.Pin.IN, machine.Pin.PULL_DOWN)
 btnd = machine.Pin(badger2040.BUTTON_DOWN, machine.Pin.IN, machine.Pin.PULL_DOWN)
 
-try:
-    squares = bytearray(open("support files/eliminationsquares.bin", "rb").read())
-except (OSError, ImportError):
-    machine.reset()
-    pass #Reset this with a failure function that just says what the error is and says to reset
-
 roundWinMsgs = ("Nice!",
                 "Good job!",
                 "You did the thing!",
@@ -28,9 +23,11 @@ roundLoseMsgs = ("Wrong shape, buddy!",
                  "That wasn't it!",
                  "Not that one!",
                  "Oops! Try again!",
-                 "Nope! >:C")
+                 "Nope! 8C")
 
-oldheartData = bytearray((
+squares = "stub"
+
+heartData = bytearray((
         0b00000000,0b00000000,
         0b00011100,0b00111000,
         0b00111110,0b01111100,
@@ -47,24 +44,6 @@ oldheartData = bytearray((
         0b00000011,0b11000000,
         0b00000001,0b10000000,
         0b00000000,0b00000000))
-
-heartData =[
-        "00000000","00000000",
-        "00011100","00111000",
-        "00111110","01111100",
-        "01111111","11111110",
-        "01111111","11111110",
-        "01111111","11111110",
-        "01111111","11111110",
-        "00111111","11111100",
-        "00111111","11111100",
-        "00011111","11111000",
-        "00011111","11111000",
-        "00001111","11110000",
-        "00000111","11100000",
-        "00000011","11000000",
-        "00000001","10000000",
-        "00000000","00000000"]
 
 #Left lines for columns, left to right
 columns = (30, 136, 239, 268)
@@ -113,7 +92,46 @@ startround = True
 #.measure_text(text, scale)
 #.image(data, width, height, x, y)
 #.partial_update(x, y8, w, h8)
-        
+
+def drawSquare(unused, squareType, nope, nah, ex, why): # Replaces d.icon with actual draw calls. Carrying over extra vars to let the rest of the code stay the same, for now
+    # Square Types are: 1 black, 2 white, 3 corner both, 4 corner bottom, 5 corner top, 6 corner neither
+    if squareType == 0:   # Draw Black Square
+        d.set_pen(0)
+        d.rectangle(ex, why, nah, nah)
+    elif squareType == 1: # Draw White Square
+        d.set_pen(15)
+        d.rectangle(ex, why, nah, nah)
+    elif squareType == 2: # Draw Corners Lower Black Upper Black
+        d.set_pen(0)
+        d.rectangle(columns[2], rows[1], nah, nah) # Draw a black square first
+        d.set_pen(15)
+        d.line(231, 63, WIDTH, HEIGHT, 4) #Draw thicker diagonal white line through square
+        d.set_pen(0)
+        d.line(231, 63, WIDTH, HEIGHT, 2) #Draw thin diagonal black line through square
+    elif squareType == 3: # Draw Corners Lower Black Upper White
+        d.set_pen(0)
+        d.rectangle(columns[2], rows[1], nah, nah) # Draw a black square first
+        d.set_pen(15)
+        d.line(231, 63, WIDTH, HEIGHT, 4) #Draw thicker diagonal white line through square
+        d.set_pen(0)
+        d.line(231, 63, WIDTH, HEIGHT, 2) #Draw thin diagonal black line through square
+        d.set_pen(15)
+        d.triangle(columns[2] + 3, rows[1] - 1, columns[2] + nah, rows[1] + nah - 3, columns[2] + nah, rows[1] - 1)
+    elif squareType == 4: # Draw Corners Lower White Upper Black
+        d.set_pen(0)
+        d.rectangle(columns[2], rows[1], nah, nah) # Draw a black square first
+        d.set_pen(15)
+        d.line(231, 63, WIDTH, HEIGHT, 4) #Draw thicker diagonal white line through square
+        d.set_pen(0)
+        d.line(231, 63, WIDTH, HEIGHT, 2) #Draw thin diagonal black line through square
+        d.set_pen(15)
+        d.triangle(columns[2] - 1, rows[1] + nah, columns[2] + nah - 3, rows[1] + nah, columns[2] - 1 , rows[1] + 3)
+    elif squareType == 5: # Draw Corners Lower White Upper White
+        d.set_pen(15)
+        d.rectangle(columns[2], rows[1], nah, nah) # Draw a black square first
+        d.set_pen(0)
+        d.line(231, 63, WIDTH, HEIGHT, 2) #Draw thin diagonal black line through square
+
 def eliminate_square(sq): #used ONLY to update a square to eliminated during gameplay
     #sq is the square to update
     #OLD 0 a1, 1 b1, 2 c1, 3 down1, 4 up1, 5 a2, 6 b2, 7 up2, 8 ctri2, 9 downtri2 THIS WAS PROBLEMATIC SO I REORDERED
@@ -123,68 +141,79 @@ def eliminate_square(sq): #used ONLY to update a square to eliminated during gam
     global activesquares
     if sq == 0: #a1
         activesquares[0][0] = 0
-        d.icon(squares, 1, 144, 24, columns[0], rows[2])
+        drawSquare(squares, 1, 144, 24, columns[0], rows[2])
         d.partial_update(columns[0], 96, 24, 32)
     elif sq == 1: #b1
         activesquares[1][0] = 0
-        d.icon(squares, 1, 144, 24, columns[1], rows[2])
+        drawSquare(squares, 1, 144, 24, columns[1], rows[2])
         d.partial_update(columns[1], 96, 24, 32)
     elif sq == 2: #c1
         activesquares[2][0] = 0
-        d.icon(squares, 1, 144, 24, columns[2], rows[2])
+        drawSquare(squares, 1, 144, 24, columns[2], rows[2])
         d.partial_update(columns[2], 96, 24, 32)
     elif sq == 3: #down1
         activesquares[3][0] = 0
-        d.icon(squares, 1, 144, 24, columns[3], rows[1])
+        drawSquare(squares, 1, 144, 24, columns[3], rows[1])
         d.partial_update(columns[3], 72, 24, 32)
     elif sq == 4: #up1
         activesquares[4][0] = 0
-        d.icon(squares, 1, 144, 24, columns[3], rows[0])
+        drawSquare(squares, 1, 144, 24, columns[3], rows[0])
         d.partial_update(columns[3], 16, 24, 32)
     elif sq == 5: #a2
         activesquares[0][1] = 0
-        d.icon(squares, 1, 144, 24, columns[0], rows[1])
+        drawSquare(squares, 1, 144, 24, columns[0], rows[1])
         d.partial_update(columns[0], 72, 24, 24)
     elif sq == 6: #b2
         activesquares[1][1] = 0
-        d.icon(squares, 1, 144, 24, columns[1], rows[1])
+        drawSquare(squares, 1, 144, 24, columns[1], rows[1])
         d.partial_update(columns[1], 72, 24, 24)
     elif sq == 9: #up2
         activesquares[4][1] = 0
-        d.icon(squares, 1, 144, 24, columns[2], rows[0])
+        drawSquare(squares, 1, 144, 24, columns[2], rows[0])
         d.partial_update(columns[2], 16, 24, 32)
     elif sq == 7: #ctri2
         activesquares[2][1] = 0
         if activesquares[3][1] == 1:
-            d.icon(squares, 4, 144, 24, columns[2], rows[1])
+            drawSquare(squares, 4, 144, 24, columns[2], rows[1])
         else:
-            d.icon(squares, 5, 144, 24, columns[2], rows[1])
+            drawSquare(squares, 5, 144, 24, columns[2], rows[1])
         d.partial_update(columns[2], 72, 24, 24)
     elif sq == 8: #downtri2
         activesquares[3][1] = 0
         if activesquares[2][1] == 1:
-            d.icon(squares, 3, 144, 24, columns[2], rows[1])
+            drawSquare(squares, 3, 144, 24, columns[2], rows[1])
         else:
-            d.icon(squares, 5, 144, 24, columns[2], rows[1])
+            drawSquare(squares, 5, 144, 24, columns[2], rows[1])
         d.partial_update(columns[2], 72, 24, 24)
     d.led(0)
-    pass
 
-def drawIcon(dats, wid, hig, ex, why): # Expects data (dats) to be an array of 8-character strings instead of a byte array IDK it's hackey
-    bloop = ""
-    for blorp in dats: # Okay I guess technically they don't need to be 8-character strings but that sure makes it easier to visualize
-        bloop += blorp
+def drawImage(dats, wid, hig, ex, why): # dats should be a bytearray of a single image as traditional badger2040 .bin data / bytearray
+    asbinstring = ''.join('{:08b}'.format(byte) for byte in dats)
     for row in range(hig):
         for col in range(wid):
-            if bloop != "":
-                if bloop[0] == "0":
-                    d.set_pen(15)
+            if asbinstring != "": # If the given dimensions are too large, just cuts off the drawing instead of an index error
+                if asbinstring[0] == "0":    # That said, if the dimensions are too small, we just stop drawing early...
+                    d.set_pen(15)            # In either case, the drawn image won't look correct, anyways.
                 else:
                     d.set_pen(0)
                 d.pixel(ex + col, why + row)
-                bloop = bloop[1:]
+                asbinstring = asbinstring[1:]
                 #print(bloop)
-            
+# Hmm, picking an icon out of an old multi-icon .bin would be more like..
+# for row in range((wid * icon), (wid * icon) + wid) to get the left and right pixels of the icon within the bin
+# data, whichIcon, totalWidth, height/size, x, y - expects square icons
+#def drawIcon(dats, sel, wid, hig, ex, why): # dats should be a bytearray of a single image as traditional badger2040 .bin data / bytearray
+#    asbinstring = ''.join('{:08b}'.format(byte) for byte in dats)
+#    for row in range(hig):
+#        for col in range(sel * wid, (sel * wid) + wid):
+#            if asbinstring != "": # If the given dimensions are too large, just cuts off the drawing instead of an index error
+#                if asbinstring[0] == "0":    # That said, if the dimensions are too small, we just stop drawing early...
+#                    d.set_pen(15)            # In either case, the drawn image won't look correct, anyways.
+#                else:
+#                    d.set_pen(0)
+#                d.pixel(ex + col, why + row)
+#                asbinstring = asbinstring[1:]
+# This technically worked but it was very very slow. Even drawImage above would probably be slower with a larger image
 
 def activate_square(sq): #used ONLY to show a new square during gameplay
     #sq is the square to update
@@ -194,52 +223,51 @@ def activate_square(sq): #used ONLY to show a new square during gameplay
     global activesquares
     if sq == 0: #a1
         activesquares[0][0] = 1
-        d.icon(squares, 0, 144, 24, columns[0], rows[2])
+        drawSquare(squares, 0, 144, 24, columns[0], rows[2])
         d.partial_update(columns[0], 96, 24, 32)
     elif sq == 1: #b1
         activesquares[1][0] = 1
-        d.icon(squares, 0, 144, 24, columns[1], rows[2])
+        drawSquare(squares, 0, 144, 24, columns[1], rows[2])
         d.partial_update(columns[1], 96, 24, 32)
     elif sq == 2: #c1
         activesquares[2][0] = 1
-        d.icon(squares, 0, 144, 24, columns[2], rows[2])
+        drawSquare(squares, 0, 144, 24, columns[2], rows[2])
         d.partial_update(columns[2], 96, 24, 32)
     elif sq == 3: #down1
         activesquares[3][0] = 1
-        d.icon(squares, 0, 144, 24, columns[3], rows[1])
+        drawSquare(squares, 0, 144, 24, columns[3], rows[1])
         d.partial_update(columns[3], 72, 24, 32)
     elif sq == 4: #up1
         activesquares[4][0] = 1
-        d.icon(squares, 0, 144, 24, columns[3], rows[0])
+        drawSquare(squares, 0, 144, 24, columns[3], rows[0])
         d.partial_update(columns[3], 16, 24, 32)
     elif sq == 5: #a2
         activesquares[0][1] = 1
-        d.icon(squares, 0, 144, 24, columns[0], rows[1])
+        drawSquare(squares, 0, 144, 24, columns[0], rows[1])
         d.partial_update(columns[0], 72, 24, 24)
     elif sq == 6: #b2
         activesquares[1][1] = 1
-        d.icon(squares, 0, 144, 24, columns[1], rows[1])
+        drawSquare(squares, 0, 144, 24, columns[1], rows[1])
         d.partial_update(columns[1], 72, 24, 24)
     elif sq == 9: #up2
         activesquares[4][1] = 1
-        d.icon(squares, 0, 144, 24, columns[2], rows[0])
+        drawSquare(squares, 0, 144, 24, columns[2], rows[0])
         d.partial_update(columns[2], 16, 24, 32)
     elif sq == 7: #ctri2
         activesquares[2][1] = 1
         if activesquares[3][1] == 1:
-            d.icon(squares, 2, 144, 24, columns[2], rows[1])
+            drawSquare(squares, 2, 144, 24, columns[2], rows[1])
         else:
-            d.icon(squares, 3, 144, 24, columns[2], rows[1])
+            drawSquare(squares, 3, 144, 24, columns[2], rows[1])
         d.partial_update(columns[2], 72, 24, 24)
     elif sq == 8: #downtri2
         activesquares[3][1] = 1
         if activesquares[2][1] == 1:
-            d.icon(squares, 2, 144, 24, columns[2], rows[1])
+            drawSquare(squares, 2, 144, 24, columns[2], rows[1])
         else:
-            d.icon(squares, 4, 144, 24, columns[2], rows[1])
+            drawSquare(squares, 4, 144, 24, columns[2], rows[1])
         d.partial_update(columns[2], 72, 24, 24)
     d.led(0)
-    pass
 
 def countdown(): #Counts down from 3 to WATCH, then triggers whatever function is next to show the pattern
     d.set_update_speed(3)
@@ -265,7 +293,6 @@ def countdown(): #Counts down from 3 to WATCH, then triggers whatever function i
     d.partial_update(40, 40, 133, 24) #Update 1 to light, WATCH to dark
     time.sleep(roundtimes[gmround])
     generate_pattern() #Countdown complete. Time to watch the squares
-    pass
 
 def generate_pattern(): #Generates the pattern to be remembered, and activates those blocks on screen as it does so
     global pattern, activesquares, active
@@ -305,18 +332,16 @@ def generate_pattern(): #Generates the pattern to be remembered, and activates t
     d.text("GO!", 185, 55, scale=0.7)
     d.partial_update(105, 40, 115, 24) #Update WATCH to light, GO! to dark
     active = True
-    pass
 
 def show_result(result):
     d.set_update_speed(3)
     d.set_pen(15) #White pen for the outline
     d.rectangle(0, 0, WIDTH, HEIGHT)
     #display.text(result, int(WIDTH / 2) - int(display.measure_text(result) / 2), int(HEIGHT / 2))
-    d.set_thickness(2)
+    d.set_thickness(3)
     d.set_pen(0)
-    d.text(result, int(WIDTH / 2) - int(d.measure_text(result, 0.5) / 2), int(HEIGHT / 2), scale=0.5)
+    d.text(result, int(WIDTH / 2) - int(d.measure_text(result, 0.8) / 2), int(HEIGHT / 2), scale=0.8)
     d.update()
-    pass
 
 def drawstaticui():
     d.set_update_speed(badger2040.UPDATE_FAST)
@@ -328,8 +353,7 @@ def drawstaticui():
     d.set_font("sans")
     d.text("eliminate the shapes in", 10, 10, scale=0.6)
     d.text("the order they appear!", 10, 32, scale=0.6)
-    d.set_thickness(2) #1px line for the diagonal bar for corner squares
-    d.line(231, 63, WIDTH, HEIGHT) #Said bar 231 63 to bottom right corner
+    d.line(231, 63, WIDTH, HEIGHT, 2) #Said bar 231 63 to bottom right corner
     
     #Level Text
     d.set_font("serif")
@@ -346,8 +370,7 @@ def drawstaticui():
     d.set_font("serif")
     d.text("LIVES", 177, 80, scale=0.5)
     for i in range(1, lives + 1):
-        drawIcon(heartData, 16, 16, 231 - i * 16, 89)
-        pass
+        drawImage(heartData, 16, 16, 231 - i * 16, 89)
     
     #Round Text
     levelmid = int((columns[2] + columns[1]) / 2) + 12
@@ -368,7 +391,6 @@ def drawstaticui():
     
     d.update()
     d.led(0)
-    pass
         
 def nextround(wl): #Just a quick function to set us up for the next round. (or declare a total win)
     global level, gmround, lives, active, startround
@@ -378,7 +400,14 @@ def nextround(wl): #Just a quick function to set us up for the next round. (or d
             if level == 3: #and it was the last level
                 show_result("You won remembering! Bye!")
                 time.sleep(3)
-                machine.reset() #replace with another prompt?
+                state = {
+                    "page": 0,
+                    "running": "elimem"
+                }
+                badger_os.state_load("launcher", state)
+                state["running"] = "launcher"
+                badger_os.state_save("launcher", state)
+                machine.reset()
             else: #This is not the last round of level 3
                 show_result("Level up!")
                 time.sleep(3)
@@ -392,7 +421,14 @@ def nextround(wl): #Just a quick function to set us up for the next round. (or d
         if lives == 1: #This was our last life
             show_result("You died.")
             time.sleep(3)
-            machine.reset() #replace with another prompt?
+            state = {
+                "page": 0,
+                "running": "elimem"
+            }
+            badger_os.state_load("launcher", state)
+            state["running"] = "launcher"
+            badger_os.state_save("launcher", state)
+            machine.reset()
         else: #This was not our last life
             show_result(random.choice(roundLoseMsgs))
             lives = lives - 1
@@ -401,7 +437,6 @@ def nextround(wl): #Just a quick function to set us up for the next round. (or d
     #countdown() #Start countdown for next round!
     #Removed the above so we'd kick out to the main loop instead
     startround = True
-    pass
 
 #Main loop
 while True:
@@ -476,6 +511,4 @@ while True:
                     nextround("win")
             else: #Neither of the above was true, so you lose the round
                 nextround("lose")
-        pass
     time.sleep(0.01)
-    pass
