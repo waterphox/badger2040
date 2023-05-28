@@ -7,8 +7,8 @@ import urequests
 import machine
 import badger_os
 
-urlCount = "http://boop.pw/count"
-urlBase = "http://boop.pw"
+urlCount = "https://boop.pw/count"
+urlBase = "https://boop.pw"
 
 # Display Setup
 badger = badger2040.Badger2040()
@@ -34,14 +34,9 @@ badger.connect()
 def getBoop(new = False):
     global boopCount
     if new:
-        useURL = urlBase
-    else:
-        useURL = urlCount
-    print(f"Requesting URL: {useURL}")
-    req = urequests.get(useURL)
-    if new:
-        print(f"Requesting URL: {urlCount}")
-        req = urequests.get(urlCount)
+        req = urequests.head(urlBase)
+    print(f"Requesting URL: {urlCount}")
+    req = urequests.get(urlCount)
     # open the response content
     boopCount = req.text
     print(boopCount)
@@ -85,8 +80,7 @@ def drawPage():
 getBoop()
 drawPage()
 
-# Call halt in a loop, on battery this switches off power.
-# On USB, the app will exit when A+C is pressed because the launcher picks that up.
+# Button Loop
 while True:
     changed = False
     if btnC.value():
@@ -94,19 +88,14 @@ while True:
         badger.rectangle(0, 21, WIDTH, HEIGHT - 50)
         badger.set_pen(0)
         badger.set_font("bitmap8")
-        badger.text("Reloading", int(WIDTH / 3), 28, WIDTH - 105, 4)
+        badger.text("Reloading", int(WIDTH / 4), 28, WIDTH - 105, 4)
         badger.update()
         getBoop(True)
         changed = True
     if changed:
         drawPage()
     if btnA.value():
-        state = {
-            "page": 0,
-            "running": "boopnettest"
-            }
-        badger_os.state_load("launcher", state)
-        state["running"] = "launcher"
-        badger_os.state_save("launcher", state)
-        machine.reset()
+        badger_os.state_clear_running()
+        badger2040.reset_pressed_to_wake()
+        machine.soft_reset()
     #badger.halt()
