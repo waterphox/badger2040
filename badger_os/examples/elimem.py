@@ -25,8 +25,6 @@ roundLoseMsgs = ("Wrong shape, buddy!",
                  "Oops! Try again!",
                  "Nope! 8C")
 
-squares = "stub"
-
 heartData = bytearray((
         0b00000000,0b00000000,
         0b00011100,0b00111000,
