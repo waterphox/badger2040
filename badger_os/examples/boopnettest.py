@@ -24,7 +24,7 @@ btnU = machine.Pin(badger2040.BUTTON_UP, machine.Pin.IN, machine.Pin.PULL_DOWN)
 
 # Approximate center lines for buttons A, B and C - Menu Text - Manu Text Size - change global
 centers = (41, 147, 253)
-btnlabels = ("EXIT", "", "Boop")
+btnlabels = ["EXIT", "", "Boop"]
 btnlabelsize = 0.8
 change = False
 
@@ -44,15 +44,25 @@ def getBoop(new = False):
 
     req.close()
 
-def drawMenu():
+def drawMenu(booping = False):
+    badger.set_pen(15)
+    badger.rectangle(0, HEIGHT - 25, WIDTH, 25)
     badger.set_pen(0)
     badger.set_font("sans")
     badger.set_thickness(2)
     badger.line(0, HEIGHT - 25, WIDTH, HEIGHT - 25, 2)
+    if booping == True:
+        btnlabels[2] = "Booping"
+    else:
+        btnlabels[2] = "Boop"
     for x in range(0, 3):
-        badger.text(btnlabels[x], centers[x] - int(badger.measure_text(btnlabels[x], btnlabelsize) / 2), HEIGHT - 11, scale=btnlabelsize)
+        if booping == True:
+            if x == 2:
+                badger.text(btnlabels[x], centers[x] - int(badger.measure_text(btnlabels[x], btnlabelsize) / 2) - 5, HEIGHT - 11, scale=btnlabelsize)
+        else:
+            badger.text(btnlabels[x], centers[x] - int(badger.measure_text(btnlabels[x], btnlabelsize) / 2), HEIGHT - 11, scale=btnlabelsize)
 
-def drawPage():
+def drawPage(booping = False):
     # Clear the display
     badger.set_pen(15)
     badger.clear()
@@ -66,11 +76,12 @@ def drawPage():
     badger.text("Boop Count", 3, 4)
     badger.set_pen(0)
     badger.set_font("bitmap8")
-    badger.text("Loading Boops", int(WIDTH / 4), 28, WIDTH - 105, 4)
-    
+    if booping == False:
+        badger.text("Loading Boops", int(WIDTH / 4), 28, WIDTH - 105, 4)
     drawMenu()
-    badger.update()
-    getBoop(change)
+    if booping == False:
+        badger.update()
+    getBoop()
     drawBoop()
 
 def drawBoop():
@@ -92,8 +103,10 @@ drawPage()
 while True:
     change = False
     if btnC.value():
-        change = True
-        drawPage()
+        drawMenu(True)
+        badger.update()
+        getBoop(True)
+        drawPage(True)
     if btnA.value(): # This works best on battery. On USB it just exits the script.
         badger_os.state_clear_running()
         badger2040.reset_pressed_to_wake()
